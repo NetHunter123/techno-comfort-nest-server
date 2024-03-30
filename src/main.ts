@@ -16,7 +16,7 @@ async function bootstrap() {
 
     app.enableCors({
         credentials: true,
-        origin:['http://localhost:3001']
+        origin:['http://localhost:3001','https://techno-comfort-client.onrender.com/']
     })
 
     const config = new DocumentBuilder()
