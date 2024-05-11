@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "root",
+    "password": "Vick03322475",
+    "database": "techno_comfort",
+    "host": "localhost",
+    "dialect": "mysql",
+    "port": 3306
+  },
+  "test": {
+    "username": "root",
+    "password": "Vick03322475",
+    "database": "techno_comfort",
+    "host": "localhost",
+    "dialect": "mysql",
+    "port": 3306
+  },
+  "production": {
+    "username": "root",
+    "password": "Vick03322475",
+    "database": "techno_comfort",
+    "host": "localhost",
+    "dialect": "mysql",
+    "port": 3306
+  }
+}

@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginUserRequest {
-  @ApiProperty({example: 'John@gmail.com'})
+  @ApiProperty({ example: 'John@gmail.com' })
   email: string;
 
-  @ApiProperty({example: 'John123'})
+  @ApiProperty({ example: 'John123' })
   password: string;
 }
 
@@ -12,10 +12,10 @@ export class LoginUserResponse {
   @ApiProperty({
     example: {
       user: {
-        name: "John",
-        surname: "Vick",
+        name: 'John',
+        surname: 'Vick',
         userId: 3,
-        email: "john@gmail.com"
+        email: 'john@gmail.com',
       },
     },
   })
