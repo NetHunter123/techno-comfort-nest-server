@@ -2,6 +2,7 @@
 
 const { faker } = require('@faker-js/faker');
 const { Column, DataType } = require('sequelize-typescript');
+const { filter } = require('rxjs');
 // const { Category } = require('../src/categories/entities/category.entity');
 // const { Category } = require('../src/categories/entities/category.entity');
 /** @type {import("sequelize-cli").Migration} */
@@ -457,25 +458,90 @@ module.exports = {
       // Формуємо масив унікальних значень для кожного поля
       categoryFilters.forEach((filter) => {
         const { field } = filter;
-        console.log('field cat', field);
+        // console.log('field cat', field);
         const values = getUniqueValues(
           productCharacteristics.filter((characteristic) => {
-            console.log(
-              'characteristic.field === field',
-              characteristic.field === field,
-              'characteristic.field',
-              characteristic.field,
-            );
+            // console.log(
+            //   'characteristic.field === field',
+            //   characteristic.field === field,
+            //   'characteristic.field',
+            //   characteristic.field,
+            // );
             return characteristic.field === field;
           }),
           'value',
         );
-        console.log('values', values);
+        // console.log('values', values);
         filter.values.push(...values);
       });
 
       return categoryFilters;
     }
+
+    const updCategories = [];
+    existingCategories[0].forEach((category) => {
+      let categoryFilters = JSON.parse(category.filters);
+      console.log('Category', category.category_name, 'id', category.id);
+      console.log('categoryFilters first get\n', categoryFilters, '\n\n');
+      const allCategoryProducts = productsStatic.filter(
+        (product) => product.categoryId === category.id,
+      );
+      console.log(
+        'allCategoryProducts',
+        allCategoryProducts,
+        '----------------------------------------------------------------------------\n',
+      );
+      let allFiltersList = [...categoryFilters];
+      allCategoryProducts.forEach((product) => {
+        const characteristics = JSON.parse(product.product_characteristics);
+        characteristics.forEach((characteristic) => {
+          const { field, fieldKey } = characteristic;
+          const existingFilter = allFiltersList.find(
+            (filter) => filter.field === field && filter.fieldKey === fieldKey,
+          );
+          if (!existingFilter) {
+            allFiltersList.push({ field, fieldKey });
+          }
+        });
+      });
+      console.log('------------allFiltersList', allFiltersList, '------------');
+
+      const updFilters = [];
+      allFiltersList.forEach((filter) => {
+        const { field, fieldKey, values } = filter;
+
+        const allValues = [];
+        allCategoryProducts.forEach((product) => {
+          const characteristics = JSON.parse(product.product_characteristics);
+          characteristics.forEach((characteristic) => {
+            if (characteristic.fieldKey === fieldKey) {
+              allValues.push(characteristic.value);
+            }
+          });
+        });
+
+        updFilters.push({
+          field,
+          fieldKey,
+          values:
+            allValues.length !== 0
+              ? Array.from(new Set(allValues.map((value) => value)))
+              : values,
+        });
+
+        console.log(
+          `all values of ${field}: ${Array.from(new Set(allValues.map((value) => value)))} count: ${allValues.length}`,
+        );
+      });
+      console.log(
+        '-----updFilters----------',
+        updFilters,
+        '\n-----updFilters----------\n',
+      );
+      updCategories.push({ ...category, filters: JSON.stringify(updFilters) });
+      console.log('\n\n\n\n');
+    });
+    console.log('\n\nupdCategories', updCategories);
 
     const updatedCategories = productsStatic.map((product) => {
       let updatedCategory = {};
@@ -491,7 +557,7 @@ module.exports = {
             categoryFilters,
           );
 
-          console.log('updateCategoryFilters test', updatedFilters);
+          // console.log('updateCategoryFilters test', updatedFilters);
           //
           // console.log('categoryFilters test', categoryFilters);
           // console.log(' existingCategories[0] test', existingCategories[0]);
@@ -502,16 +568,20 @@ module.exports = {
         }
       });
       // console.log('updatedCategory fin', updatedCategory);
-      console.log(
-        'product.id',
-        product.id,
-        'product.categoryId',
-        product.categoryId,
-      );
+      // console.log(
+      //   'product.id',
+      //   product.id,
+      //   'product.categoryId',
+      //   product.categoryId,
+      // );
       return updatedCategory;
     });
+
     // console.log('updatedCategories:', updatedCategories);
-    console.log('Result updatedCategories:');
+    // console.log('Result updatedCategories:');
+    console.log(
+      '////////////////////////////////////////////////////////////////',
+    );
     updatedCategories.map((cat) => {
       console.log(
         'Category\n',
