@@ -3,9 +3,9 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectModel } from '@nestjs/sequelize';
 import { Product } from 'src/products/entities/product.entity';
-import { IProductsQuery } from 'src/products/types';
+import { IProductsQuery, Filter } from 'src/products/types';
 import { Producer } from 'src/producers/entities/producer.entity';
-import {Op, Sequelize} from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
 import { Category } from 'src/categories/entities/category.entity';
 
 @Injectable()
@@ -14,6 +14,157 @@ export class ProductsService {
     @InjectModel(Product)
     private productModel: typeof Product,
   ) {}
+
+  async getCategoryProducts(
+    category: number | string,
+    query: IProductsQuery,
+  ): Promise<{ count: number; rows: Product[] }> {
+    // const totalRecords = this.productModel.count();
+    const limit = +query.limit;
+    const pageNumber = +query.pageNumber;
+    const offset = limit * (pageNumber - 1);
+    let orderByPrice = null;
+
+    switch (query.order) {
+      case 'cheap':
+        orderByPrice = [['price', 'ASC']];
+        break;
+      case 'expensive':
+        orderByPrice = [['price', 'DESC']];
+        break;
+    }
+
+    const response = await this.productModel.findAndCountAll({
+      limit,
+      offset,
+      where: { categoryId: category },
+      order: orderByPrice,
+      include: [
+        {
+          model: Producer,
+          as: 'producer',
+          where: { id: Sequelize.col('Product.producerId') },
+        },
+        {
+          model: Category,
+          as: 'category',
+          where: { id: Sequelize.col('Product.categoryId') },
+        },
+      ],
+    });
+    // console.log("paginateAndFilter response", response)
+    return { ...response };
+  }
+
+  async getProductsPaginationAndFilter(
+    query: IProductsQuery,
+  ): Promise<{ count: number; rows: Product[] }> {
+    const parseFilters = (query: IProductsQuery): Filter[] => {
+      const filters: Filter[] = [];
+      for (const key in query) {
+        if (key !== 'limit' && key !== 'pageNumber' && key !== 'order') {
+          filters.push({ field: key, value: query[key] });
+        }
+      }
+      return filters;
+    };
+
+    const applyFilters = (filters: Filter[]) => {
+      const whereConditions: any[] = [];
+
+      filters.forEach((filter) => {
+        if (filter.field === 'producer') {
+          // Фільтр по виробнику буде доданий до include
+          return;
+        }
+
+        if (filter.field === 'category') {
+          // Фільтр по виробнику буде доданий до include
+          return;
+        }
+
+        if (filter.field === 'price') {
+          whereConditions.push({
+            price: {
+              [Op.eq]: filter.value,
+            },
+          });
+          return;
+        }
+
+        const value =
+          typeof filter.value === 'string' ? filter.value : filter.value;
+
+        if (Array.isArray(filter.value)) {
+          whereConditions.push({
+            product_characteristics: {
+              [Op.or]: filter.value.map((value) => ({
+                product_characteristics: {
+                  [Op.like]: `%{"fieldKey": "${filter.field}", "value": "${value}"}%`,
+                },
+              })),
+              // [Op.contains]: JSON.stringify([
+              //   { key: filter.field, value: { [Op.or]: value } },
+              // ]),
+              // [Op.or]: value.map((v) => ({ key: filter.field, value: v })),
+            },
+          });
+        } else {
+          whereConditions.push({
+            product_characteristics: {
+              [Op.like]: `%{"fieldKey": "${filter.field}", "value": "${filter.value}"}%`,
+            },
+            // product_characteristics: {
+            //   [Op.contains]: JSON.stringify([{ key: filter.fieldKey, value }]),
+            // },
+          });
+        }
+      });
+
+      return whereConditions;
+    };
+
+    const filters = parseFilters(query);
+    const whereConditions = applyFilters(filters);
+
+    const limit = +query.limit;
+    const pageNumber = +query.pageNumber;
+    const offset = limit * (pageNumber - 1);
+    let orderByPrice = null;
+
+    switch (query.order) {
+      case 'cheap':
+        orderByPrice = [['price', 'ASC']];
+        break;
+      case 'expensive':
+        orderByPrice = [['price', 'DESC']];
+        break;
+    }
+
+    const response = await this.productModel.findAndCountAll({
+      limit,
+      offset,
+      where: {
+        [Op.and]: whereConditions,
+      },
+      // order: [[query.order, 'ASC']],
+      order: orderByPrice,
+      include: [
+        {
+          model: Producer,
+          as: 'producer',
+          where: { id: Sequelize.col('Product.producerId') },
+        },
+        {
+          model: Category,
+          as: 'category',
+          where: { id: Sequelize.col('Product.categoryId') },
+        },
+      ],
+    });
+
+    return { ...response };
+  }
 
   async paginateAndFilter(
     query: IProductsQuery,
@@ -149,7 +300,6 @@ export class ProductsService {
       ],
     });
   }
-
 
   create(createProductDto: CreateProductDto) {
     return 'This action adds a new product';

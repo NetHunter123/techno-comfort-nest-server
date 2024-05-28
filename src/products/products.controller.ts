@@ -11,24 +11,39 @@ import {
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import {ApiBody, ApiOkResponse} from "@nestjs/swagger";
+import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
 import {
-  GetBestsellersResponse, GetByNameRequest, GetByNameResponse,
+  CategoryProductsPaginateResponse,
+  GetBestsellersResponse,
+  GetByNameRequest,
+  GetByNameResponse,
   GetNewResponse,
   PaginateAndFilterResponse,
   SearchRequest,
-  SearchResponse
-} from "src/products/types";
-import {FindOneResponse} from "src/products/types";
+  SearchResponse,
+} from 'src/products/types';
+import { FindOneResponse } from 'src/products/types';
 
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  // @ApiOkResponse({ type: PaginateAndFilterResponse })
+  @Get('')
+  getProductsPaginationAndFilter(@Query() query) {
+    return this.productsService.getProductsPaginationAndFilter(query);
+  }
+
   @ApiOkResponse({ type: PaginateAndFilterResponse })
-  @Get()
+  @Get('all')
   paginationAndFilter(@Query() query) {
     return this.productsService.paginateAndFilter(query);
+  }
+
+  @ApiOkResponse({ type: CategoryProductsPaginateResponse })
+  @Get('category/:category')
+  getCategoryProducts(@Param('category') category: string, @Query() query) {
+    return this.productsService.getCategoryProducts(+category, query);
   }
 
   @ApiOkResponse({ type: FindOneResponse })

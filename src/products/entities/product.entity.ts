@@ -41,8 +41,6 @@ export class Product extends Model {
   product_characteristics: string;
 
   @Column(DataType.TEXT)
-  //або альтернатива нище якщо не спрацює вище
-  // @Column({type: "LONGTEXT"})
   images: string;
 
   @Column

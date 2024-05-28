@@ -3,12 +3,17 @@
 const producersList = [
   'LG',
   'Asus',
+  'MSI',
   'Samsung',
   'Xiaomi',
   'Acer',
   'Apple',
   'Redmi',
   'HP',
+  'Dell',
+  'iPhone',
+  'Vestfrost',
+  'Sony',
 ];
 
 /** @type {import('sequelize-cli').Migration} */
@@ -30,12 +35,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    /**
-     * Add commands to revert seed here.
-     *
-     * Example:
-     * await queryInterface.bulkDelete('People', null, {});
-     */
     return queryInterface.bulkDelete('Producers', null, {});
   },
 };
