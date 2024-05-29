@@ -45,7 +45,7 @@ module.exports = {
         type: Sequelize.TEXT,
       },
       product_characteristics: {
-        type: Sequelize.TEXT,
+        type: Sequelize.JSON,
       },
       images: {
         type: Sequelize.TEXT,

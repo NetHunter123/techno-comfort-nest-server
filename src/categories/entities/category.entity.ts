@@ -21,8 +21,8 @@ export class Category extends Model {
   @Column(DataType.TEXT)
   description: string;
 
-  @Column(DataType.TEXT)
-  filters: string;
+  @Column(DataType.JSON)
+  filters: object;
 
   @HasMany(() => Product)
   products: Product[];

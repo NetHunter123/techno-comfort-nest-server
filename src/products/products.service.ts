@@ -63,7 +63,8 @@ export class ProductsService {
       const filters: Filter[] = [];
       for (const key in query) {
         if (key !== 'limit' && key !== 'pageNumber' && key !== 'order') {
-          filters.push({ field: key, value: query[key] });
+          console.log('query[key]', `${query[key]}`.split(','), '\n\n\n');
+          filters.push({ field: key, value: `${query[key]}`.split(',') });
         }
       }
       return filters;
@@ -92,40 +93,64 @@ export class ProductsService {
           return;
         }
 
-        const value =
-          typeof filter.value === 'string' ? filter.value : filter.value;
+        // const value =
+        //   typeof filter.value === 'string' ? filter.value : filter.value;
 
         if (Array.isArray(filter.value)) {
+          console.log('\n\n\nє array\n\n\n');
+          // whereConditions.push(
+          //   Sequelize.literal(
+          //     `JSON_CONTAINS(product_characteristics, '{"fieldKey": "${filter.field}", "value": "${filter.value}"}', '$')`,
+          //   ),
+          // );
+          const orConditions = filter.value.map((value) => {
+            return Sequelize.literal(
+              `JSON_CONTAINS(product_characteristics, '{"fieldKey": "${filter.field}", "value": "${value}"}', '$')`,
+            );
+          });
           whereConditions.push({
-            product_characteristics: {
-              [Op.or]: filter.value.map((value) => ({
-                product_characteristics: {
-                  [Op.like]: `%{"fieldKey": "${filter.field}", "value": "${value}"}%`,
-                },
-              })),
-              // [Op.contains]: JSON.stringify([
-              //   { key: filter.field, value: { [Op.or]: value } },
-              // ]),
-              // [Op.or]: value.map((v) => ({ key: filter.field, value: v })),
-            },
+            [Op.or]: orConditions,
           });
         } else {
-          // const searchValue = `{"fieldKey": "${filter.field}", "value": "${filter.value}"}`;
-          whereConditions.push({
-            // product_characteristics: {
-            //   [Op.like]: `%${searchValue}%`,
-            //   // `{\"fieldKey\": \"ram\", \"value\": \"8GB\"}`
-            // },
-            // {\"field\":\"Оперативна пам'ять\",\"fieldKey\":\"ram\",\"value\":\"8GB\"}
-            product_characteristics: {
-              [Op.contains]: JSON.stringify({
-                field: "Оперативна пам'ять",
-                fieldKey: filter.field,
-                value,
-              }),
-            },
-          });
+          console.log('\n\n\nє одне\n\n\n');
+          whereConditions.push(
+            Sequelize.literal(
+              `JSON_CONTAINS(product_characteristics, '{"fieldKey": "${filter.field}", "value": "${filter.value}"}', '$')`,
+            ),
+          );
         }
+
+        // if (Array.isArray(filter.value)) {
+        //   whereConditions.push({
+        //     product_characteristics: {
+        //       [Op.or]: filter.value.map((value) => ({
+        //         product_characteristics: {
+        //           [Op.like]: `%{"fieldKey": "${filter.field}", "value": "${value}"}%`,
+        //         },
+        //       })),
+        //       // [Op.contains]: JSON.stringify([
+        //       //   { key: filter.field, value: { [Op.or]: value } },
+        //       // ]),
+        //       // [Op.or]: value.map((v) => ({ key: filter.field, value: v })),
+        //     },
+        //   });
+        // } else {
+        //   // const searchValue = `{"fieldKey": "${filter.field}", "value": "${filter.value}"}`;
+        //   whereConditions.push({
+        //     // product_characteristics: {
+        //     //   [Op.like]: `%${searchValue}%`,
+        //     //   // `{\"fieldKey\": \"ram\", \"value\": \"8GB\"}`
+        //     // },
+        //     // {\"field\":\"Оперативна пам'ять\",\"fieldKey\":\"ram\",\"value\":\"8GB\"}
+        //     product_characteristics: {
+        //       [Op.contains]: JSON.stringify({
+        //         field: "Оперативна пам'ять",
+        //         fieldKey: filter.field,
+        //         value,
+        //       }),
+        //     },
+        //   });
+        // }
       });
 
       return whereConditions;

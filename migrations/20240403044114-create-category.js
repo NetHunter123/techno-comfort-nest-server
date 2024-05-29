@@ -21,7 +21,7 @@ module.exports = {
         type: Sequelize.TEXT,
       },
       filters: {
-        type: Sequelize.TEXT,
+        type: Sequelize.JSON,
       },
       createdAt: {
         allowNull: false,

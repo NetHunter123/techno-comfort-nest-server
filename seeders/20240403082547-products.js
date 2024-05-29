@@ -2661,69 +2661,20 @@ module.exports = {
     const existingCategories = await queryInterface.sequelize.query(
       'SELECT * FROM categories',
     );
-    // console.log('existingCategories', existingCategories);
-
-    const products = [...Array(10)].map(() => ({
-      producerId: faker.number.int({ min: 1, max: 7 }),
-      categoryId: faker.number.int({ min: 1, max: 8 }),
-
-      product_name: faker.lorem.sentence(2),
-      description: faker.lorem.sentence(16),
-
-      vendor_code: faker.string.numeric({
-        length: { min: 5, max: 5 },
-        allowLeadingZeros: false,
-      }),
-
-      // characteristics: JSON.stringify(""),
-      // characteristics: JSON.stringify([...Array(7)].map(() => {
-      //     return {key: faker.lorem.sentence("1"), value: faker.lorem.sentence(4)}
-      //   },
-      // )),
-      product_characteristics: JSON.stringify([
-        { field: 'charactertest', fieldKey: 'charactertest', value: 'test' },
-        { field: 'character55', fieldKey: 'character32', value: '35' },
-        { field: 'category3', fieldKey: 'category11233', value: 1 },
-        { field: 'charactertest', fieldKey: 'charactertest', value: 'test' },
-      ]),
-
-      images: JSON.stringify(
-        [...Array(7)].map(
-          () =>
-            `${faker.image.urlLoremFlickr({ category: 'gadgets' })}?random=${faker.string.numeric(
-              {
-                allowLeadingZeros: false,
-                length: {
-                  min: 5,
-                  max: 15,
-                },
-              },
-            )}`,
-        ),
-      ),
-
-      bestseller: faker.datatype.boolean(),
-      new: faker.datatype.boolean(),
-
-      price: faker.string.numeric({
-        allowLeadingZeros: false,
-        length: {
-          min: 2,
-          max: 5,
-        },
-      }),
-      in_stock: faker.string.numeric({
-        allowLeadingZeros: false,
-        length: 2,
-      }),
-
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }));
+    console.log('existingCategories', existingCategories);
 
     const updatedCategories = [];
     existingCategories[0].forEach((category) => {
-      let categoryFilters = JSON.parse(category.filters);
+      // let categoryFilters = JSON.parse(category.filters);
+      let categoryFilters;
+      try {
+        categoryFilters = Array.isArray(category.filters)
+          ? []
+          : JSON.parse(category.filters);
+      } catch (error) {
+        console.error('Invalid JSON in category.filters:', category.filters);
+        throw error;
+      }
       console.log('Category', category.category_name, 'id', category.id);
       console.log('categoryFilters first get\n', categoryFilters, '\n\n');
       const allCategoryProducts = productsStatic.filter(
@@ -2736,7 +2687,17 @@ module.exports = {
       );
       let allFiltersList = [...categoryFilters];
       allCategoryProducts.forEach((product) => {
-        const characteristics = JSON.parse(product.product_characteristics);
+        // const characteristics = JSON.parse(product.product_characteristics);
+        let characteristics;
+        try {
+          characteristics = JSON.parse(product.product_characteristics);
+        } catch (error) {
+          console.error(
+            'Invalid JSON in product.product_characteristics:',
+            product.product_characteristics,
+          );
+          throw error;
+        }
         characteristics.forEach((characteristic) => {
           const { field, fieldKey } = characteristic;
           const existingFilter = allFiltersList.find(
@@ -2755,7 +2716,17 @@ module.exports = {
 
         const allValues = [];
         allCategoryProducts.forEach((product) => {
-          const characteristics = JSON.parse(product.product_characteristics);
+          // const characteristics = JSON.parse(product.product_characteristics);
+          let characteristics;
+          try {
+            characteristics = JSON.parse(product.product_characteristics);
+          } catch (error) {
+            console.error(
+              'Invalid JSON in product.product_characteristics:',
+              product.product_characteristics,
+            );
+            throw error;
+          }
           characteristics.forEach((characteristic) => {
             if (characteristic.fieldKey === fieldKey) {
               allValues.push(characteristic.value);
@@ -2810,3 +2781,61 @@ module.exports = {
      */
   },
 };
+
+// const products = [...Array(10)].map(() => ({
+//   producerId: faker.number.int({ min: 1, max: 7 }),
+//   categoryId: faker.number.int({ min: 1, max: 8 }),
+//
+//   product_name: faker.lorem.sentence(2),
+//   description: faker.lorem.sentence(16),
+//
+//   vendor_code: faker.string.numeric({
+//     length: { min: 5, max: 5 },
+//     allowLeadingZeros: false,
+//   }),
+//
+//   // characteristics: JSON.stringify(""),
+//   // characteristics: JSON.stringify([...Array(7)].map(() => {
+//   //     return {key: faker.lorem.sentence("1"), value: faker.lorem.sentence(4)}
+//   //   },
+//   // )),
+//   product_characteristics: JSON.stringify([
+//     { field: 'charactertest', fieldKey: 'charactertest', value: 'test' },
+//     { field: 'character55', fieldKey: 'character32', value: '35' },
+//     { field: 'category3', fieldKey: 'category11233', value: 1 },
+//     { field: 'charactertest', fieldKey: 'charactertest', value: 'test' },
+//   ]),
+//
+//   images: JSON.stringify(
+//     [...Array(7)].map(
+//       () =>
+//         `${faker.image.urlLoremFlickr({ category: 'gadgets' })}?random=${faker.string.numeric(
+//           {
+//             allowLeadingZeros: false,
+//             length: {
+//               min: 5,
+//               max: 15,
+//             },
+//           },
+//         )}`,
+//     ),
+//   ),
+//
+//   bestseller: faker.datatype.boolean(),
+//   new: faker.datatype.boolean(),
+//
+//   price: faker.string.numeric({
+//     allowLeadingZeros: false,
+//     length: {
+//       min: 2,
+//       max: 5,
+//     },
+//   }),
+//   in_stock: faker.string.numeric({
+//     allowLeadingZeros: false,
+//     length: 2,
+//   }),
+//
+//   createdAt: new Date(),
+//   updatedAt: new Date(),
+// }));

@@ -37,8 +37,8 @@ export class Product extends Model {
   @Column(DataType.TEXT)
   description: string;
 
-  @Column(DataType.TEXT)
-  product_characteristics: string;
+  @Column(DataType.JSON)
+  product_characteristics: object;
 
   @Column(DataType.TEXT)
   images: string;
