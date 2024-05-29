@@ -110,13 +110,20 @@ export class ProductsService {
             },
           });
         } else {
+          // const searchValue = `{"fieldKey": "${filter.field}", "value": "${filter.value}"}`;
           whereConditions.push({
-            product_characteristics: {
-              [Op.like]: `%{"fieldKey": "${filter.field}", "value": "${filter.value}"}%`,
-            },
             // product_characteristics: {
-            //   [Op.contains]: JSON.stringify([{ key: filter.fieldKey, value }]),
+            //   [Op.like]: `%${searchValue}%`,
+            //   // `{\"fieldKey\": \"ram\", \"value\": \"8GB\"}`
             // },
+            // {\"field\":\"Оперативна пам'ять\",\"fieldKey\":\"ram\",\"value\":\"8GB\"}
+            product_characteristics: {
+              [Op.contains]: JSON.stringify({
+                field: "Оперативна пам'ять",
+                fieldKey: filter.field,
+                value,
+              }),
+            },
           });
         }
       });
