@@ -15,21 +15,48 @@ export class ProductsService {
     private productModel: typeof Product,
   ) {}
 
-  async getMinMaxPrice(): Promise<{
+  // getMinMaxPrice(response: any) {
+  //   const prices = response.rows.map((row) => parseFloat(row.price));
+  //   const minPrice = Math.min(...prices);
+  //   const maxPrice = Math.max(...prices);
+  //
+  //   return {
+  //     minPrice,
+  //     maxPrice,
+  //   };
+  // }
+
+  async getMinMaxPrice(whereConditions): Promise<{
     minPrice: any;
     maxPrice: any;
   }> {
-    const prices = await this.productModel.findAll({
-      attributes: [
-        [Sequelize.fn('MIN', Sequelize.col('price')), 'minPrice'],
-        [Sequelize.fn('MAX', Sequelize.col('price')), 'maxPrice'],
+    const response = await this.productModel.findAndCountAll({
+      where: {
+        [Op.and]: whereConditions,
+      },
+
+      include: [
+        {
+          model: Producer,
+          as: 'producer',
+          where: { id: Sequelize.col('Product.producerId') },
+        },
+        {
+          model: Category,
+          as: 'category',
+          where: { id: Sequelize.col('Product.categoryId') },
+        },
       ],
     });
 
-    const minPrice = prices[0].get('minPrice');
-    const maxPrice = prices[0].get('maxPrice');
+    const prices = response.rows.map((row) => row.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
 
-    return { minPrice, maxPrice };
+    return {
+      minPrice,
+      maxPrice,
+    };
   }
 
   async getCategoryProducts(
@@ -136,7 +163,6 @@ export class ProductsService {
       return whereConditions;
     };
 
-    const { minPrice, maxPrice } = await this.getMinMaxPrice();
     const filters = parseFilters(query);
     const whereConditions = applyFilters(filters);
 
@@ -174,6 +200,9 @@ export class ProductsService {
         },
       ],
     });
+
+    const { minPrice, maxPrice } = await this.getMinMaxPrice(whereConditions);
+
     // const response = await this.productModel.findAndCountAll();
 
     return { ...response, meta: { price: { min: minPrice, max: maxPrice } } };
