@@ -26,10 +26,9 @@ export class ProductsService {
   //   };
   // }
 
-  async getMinMaxPrice(whereConditions): Promise<{
-    minPrice: any;
-    maxPrice: any;
-  }> {
+  async getMinMaxPrice(
+    whereConditions,
+  ): Promise<{ minPrice: any; maxPrice: any }> {
     const response = await this.productModel.findAndCountAll({
       where: {
         [Op.and]: whereConditions,
@@ -113,7 +112,6 @@ export class ProductsService {
       }
       return filters;
     };
-
     const applyFilters = (filters: Filter[]) => {
       const whereConditions: any[] = [];
 
@@ -171,6 +169,21 @@ export class ProductsService {
     const offset = limit * (pageNumber - 1);
     let orderByPrice = null;
 
+    let category;
+    if (query.category) {
+      category = `${query.category}`.split(',').map(Number);
+    } else {
+      category = Sequelize.col('Product.categoryId');
+    }
+    let producer;
+    if (query.producer) {
+      producer = `${query.producer}`.split(',').map(Number);
+    } else {
+      producer = Sequelize.col('Product.producerId');
+    }
+
+    console.log('\n\n\ncategory__producer\n\n\n', producer, category);
+
     switch (query.order) {
       case 'cheap':
         orderByPrice = [['price', 'ASC']];
@@ -191,12 +204,17 @@ export class ProductsService {
         {
           model: Producer,
           as: 'producer',
-          where: { id: Sequelize.col('Product.producerId') },
+          where: {
+            id: producer,
+          },
         },
         {
           model: Category,
           as: 'category',
-          where: { id: Sequelize.col('Product.categoryId') },
+          // where: category || {
+          //   id: Sequelize.col('Product.categoryId'),
+          // },
+          where: { id: category },
         },
       ],
     });
