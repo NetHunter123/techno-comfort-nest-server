@@ -15,6 +15,23 @@ export class ProductsService {
     private productModel: typeof Product,
   ) {}
 
+  async getMinMaxPrice(): Promise<{
+    minPrice: any;
+    maxPrice: any;
+  }> {
+    const prices = await this.productModel.findAll({
+      attributes: [
+        [Sequelize.fn('MIN', Sequelize.col('price')), 'minPrice'],
+        [Sequelize.fn('MAX', Sequelize.col('price')), 'maxPrice'],
+      ],
+    });
+
+    const minPrice = prices[0].get('minPrice');
+    const maxPrice = prices[0].get('maxPrice');
+
+    return { minPrice, maxPrice };
+  }
+
   async getCategoryProducts(
     category: number | string,
     query: IProductsQuery,
@@ -58,7 +75,7 @@ export class ProductsService {
 
   async getProductsPaginationAndFilter(
     query: IProductsQuery,
-  ): Promise<{ count: number; rows: Product[] }> {
+  ): Promise<{ count: number; rows: Product[]; meta: object }> {
     const parseFilters = (query: IProductsQuery): Filter[] => {
       const filters: Filter[] = [];
       for (const key in query) {
@@ -85,24 +102,19 @@ export class ProductsService {
         }
 
         if (filter.field === 'price') {
+          console.log('\n\n\nfilter.value\n\n\n', filter.value);
+          const queryMinPrice = +filter.value[0] || minPrice;
+          const queryMaxPrice = +filter.value[1] || maxPrice;
+
           whereConditions.push({
             price: {
-              [Op.eq]: filter.value,
+              [Op.between]: [queryMinPrice, queryMaxPrice], // Фільтрація за діапазоном цін
             },
           });
           return;
         }
 
-        // const value =
-        //   typeof filter.value === 'string' ? filter.value : filter.value;
-
         if (Array.isArray(filter.value)) {
-          console.log('\n\n\nє array\n\n\n');
-          // whereConditions.push(
-          //   Sequelize.literal(
-          //     `JSON_CONTAINS(product_characteristics, '{"fieldKey": "${filter.field}", "value": "${filter.value}"}', '$')`,
-          //   ),
-          // );
           const orConditions = filter.value.map((value) => {
             return Sequelize.literal(
               `JSON_CONTAINS(product_characteristics, '{"fieldKey": "${filter.field}", "value": "${value}"}', '$')`,
@@ -119,43 +131,12 @@ export class ProductsService {
             ),
           );
         }
-
-        // if (Array.isArray(filter.value)) {
-        //   whereConditions.push({
-        //     product_characteristics: {
-        //       [Op.or]: filter.value.map((value) => ({
-        //         product_characteristics: {
-        //           [Op.like]: `%{"fieldKey": "${filter.field}", "value": "${value}"}%`,
-        //         },
-        //       })),
-        //       // [Op.contains]: JSON.stringify([
-        //       //   { key: filter.field, value: { [Op.or]: value } },
-        //       // ]),
-        //       // [Op.or]: value.map((v) => ({ key: filter.field, value: v })),
-        //     },
-        //   });
-        // } else {
-        //   // const searchValue = `{"fieldKey": "${filter.field}", "value": "${filter.value}"}`;
-        //   whereConditions.push({
-        //     // product_characteristics: {
-        //     //   [Op.like]: `%${searchValue}%`,
-        //     //   // `{\"fieldKey\": \"ram\", \"value\": \"8GB\"}`
-        //     // },
-        //     // {\"field\":\"Оперативна пам'ять\",\"fieldKey\":\"ram\",\"value\":\"8GB\"}
-        //     product_characteristics: {
-        //       [Op.contains]: JSON.stringify({
-        //         field: "Оперативна пам'ять",
-        //         fieldKey: filter.field,
-        //         value,
-        //       }),
-        //     },
-        //   });
-        // }
       });
 
       return whereConditions;
     };
 
+    const { minPrice, maxPrice } = await this.getMinMaxPrice();
     const filters = parseFilters(query);
     const whereConditions = applyFilters(filters);
 
@@ -172,7 +153,6 @@ export class ProductsService {
         orderByPrice = [['price', 'DESC']];
         break;
     }
-
     const response = await this.productModel.findAndCountAll({
       limit,
       offset,
@@ -194,8 +174,9 @@ export class ProductsService {
         },
       ],
     });
+    // const response = await this.productModel.findAndCountAll();
 
-    return { ...response };
+    return { ...response, meta: { price: { min: minPrice, max: maxPrice } } };
   }
 
   async paginateAndFilter(
