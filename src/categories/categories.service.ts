@@ -11,27 +11,8 @@ export class CategoriesService {
     @InjectModel(Category)
     private categoryModel: typeof Category,
   ) {}
-  // create(createCategoryDto: CreateCategoryDto) {
-  //   return 'This action adds a new categories';
-  // }
-
-  findAlsl() {
-    return `This action returns all categories`;
-  }
 
   async findAll() {
     return this.categoryModel.findAndCountAll();
   }
-
-  // findOne(id: number) {
-  //   return `This action returns a #${id} categories`;
-  // }
-  //
-  // update(id: number, updateCategoryDto: UpdateCategoryDto) {
-  //   return `This action updates a #${id} categories`;
-  // }
-  //
-  // remove(id: number) {
-  //   return `This action removes a #${id} categories`;
-  // }
 }

@@ -19,8 +19,7 @@ const producersList = [
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    console.log('1');
-    return queryInterface.bulkInsert(
+\\    return queryInterface.bulkInsert(
       'Producers',
       producersList.map((producer) => ({
         producer_name: producer,

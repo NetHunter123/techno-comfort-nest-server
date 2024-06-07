@@ -15,17 +15,6 @@ export class ProductsService {
     private productModel: typeof Product,
   ) {}
 
-  // getMinMaxPrice(response: any) {
-  //   const prices = response.rows.map((row) => parseFloat(row.price));
-  //   const minPrice = Math.min(...prices);
-  //   const maxPrice = Math.max(...prices);
-  //
-  //   return {
-  //     minPrice,
-  //     maxPrice,
-  //   };
-  // }
-
   async getMinMaxPrice(
     whereConditions,
   ): Promise<{ minPrice: any; maxPrice: any }> {
@@ -167,7 +156,6 @@ export class ProductsService {
     const limit = +query.limit;
     const pageNumber = +query.pageNumber;
     const offset = limit * (pageNumber - 1);
-    let orderByPrice = null;
 
     let category;
     if (query.category) {
@@ -183,13 +171,16 @@ export class ProductsService {
     }
 
     console.log('\n\n\ncategory__producer\n\n\n', producer, category);
-
+    let orderByPrice = null;
     switch (query.order) {
-      case 'cheap':
+      case 'cheapest':
         orderByPrice = [['price', 'ASC']];
         break;
       case 'expensive':
         orderByPrice = [['price', 'DESC']];
+        break;
+      default:
+        orderByPrice = null;
         break;
     }
     const response = await this.productModel.findAndCountAll({
@@ -198,7 +189,6 @@ export class ProductsService {
       where: {
         [Op.and]: whereConditions,
       },
-      // order: [[query.order, 'ASC']],
       order: orderByPrice,
       include: [
         {
@@ -221,9 +211,13 @@ export class ProductsService {
 
     const { minPrice, maxPrice } = await this.getMinMaxPrice(whereConditions);
 
-    // const response = await this.productModel.findAndCountAll();
+    const { count } = response;
+    const totalPages = Math.ceil(count / limit);
 
-    return { ...response, meta: { price: { min: minPrice, max: maxPrice } } };
+    return {
+      ...response,
+      meta: { price: { min: minPrice, max: maxPrice }, pages: totalPages },
+    };
   }
 
   async paginateAndFilter(
