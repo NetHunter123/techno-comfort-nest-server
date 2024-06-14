@@ -47,9 +47,9 @@ export class ProductsController {
   }
 
   @ApiOkResponse({ type: FindOneResponse })
-  @Get('find/:id')
-  getOne(@Param('id') id: string) {
-    return this.productsService.findOne(+id);
+  @Get('find/:vendor_code')
+  getOne(@Param('vendor_code') vendor_code: string) {
+    return this.productsService.findOne(+vendor_code);
   }
 
   @ApiOkResponse({ type: GetBestsellersResponse })

@@ -298,9 +298,11 @@ export class ProductsService {
     });
   }
 
-  async findOne(id: number | string): Promise<Product> {
-    return this.productModel.findOne({
-      where: { id },
+  async findOne(
+    vendor_code: number | string,
+  ): Promise<Product | { msg: string }> {
+    const resp = this.productModel.findOne({
+      where: { vendor_code },
       include: [
         {
           model: Producer,
@@ -314,6 +316,7 @@ export class ProductsService {
         },
       ],
     });
+    return resp || { msg: 'Такого продукту немає' };
   }
 
   async searchByString(
